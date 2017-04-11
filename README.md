@@ -7,6 +7,7 @@ Some understanding of how Perl finds modules may help to use this software. The 
     export PERL5LIB:"Path to module directory":$PERL5LIB
 
 For example, you may have the TOPBOT.pm file located at \~/perl/lib/Bio/SNP/TOPBOT.pm
+
 In this example you would first run, or add to your .bashrc or .bash_profile
     export PERL5LIB:"\~/perl/lib/":$PERL5LIB
 
