@@ -146,7 +146,7 @@ if($noheader) {
     if(defined($AB)) {
         if($AB =~ /^\d+$/) { die "--AB $hsay\n" }
     } else {
-        if($A =~ /^\d+$/ || $B ~ /^\d+$/) { die "--A and --B $hsay\n" }
+        if($A =~ /^\d+$/ || $B =~ /^\d+$/) { die "--A and --B $hsay\n" }
     }
 }
 
@@ -154,6 +154,10 @@ if($noheader) {
 # Process the input
 my $header_unseen = !$noheader; # assume column numbers are correct
 while(<>) {
+    if($skip > 0) {
+        $skip--;
+        next;
+    }
     next if /^\s*$comment/o;
     chomp;
     my @line = split /$delim/o;
@@ -172,9 +176,29 @@ while(<>) {
         }
     }
     
-    # TODO: add chromprefix
+    my ($allele_a, $allele_b);
+    my $is_base_error;
+    if(defined($AB)) {
+        my @matches = ($AB =~ /[ACGT]/g);
+        if(@matches == 2) {
+            ($allele_a, $allele_b) = @matches;
+        } else {
+            $is_base_error = 'ERROR_not_AGCT';    
+        }
+    } else {
+        $allele_a = $line[$A];
+        $allele_b = $line[$B];
+        unless($allele_a =~ /^[ACGT]$/ && $allele_b =~ /^[ACGT]$/) {
+            $is_base_error = 'ERROR_not_AGCT';
+        }
+    }
 
-    # topbot_genome $ref, CHROM, POSITION, ALLELEA, ALLELEB;
+    my $topbot;
+    if(defined($is_base_error)) {
+        $topbot = $is_base_error;
+    } else {
+        $topbot = topbot_genome $ref, "$chromprefix${line[$chrom]}", $line[$position], $allele_a, $allele_b;
+    }
     
     # TODO: process /^ERROR_/, maybe count them for the user
     # TODO: option to filter errors
