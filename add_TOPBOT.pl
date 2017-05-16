@@ -9,6 +9,10 @@ cat coordinates.txt | add_TOPBOT.pl --ref hg19.fa
 
 Add TOPBOT designation to a delimited file
 
+=head1 Synopsis
+
+    SNPs that could not be called as TOP or BOT instead have an ERROR_* code.
+
 =head1 Options
 
 =head2 Required 
@@ -33,6 +37,7 @@ Add TOPBOT designation to a delimited file
   --B STRING
   --AB STRING
     These options specify the column for the SNP chromosome, position, first allele (A), second allele (B), combined allele (AB). 
+    If these are a number, then it refers to that column number, otherwise it is the name of the column according to the header.
     If the alleles are in two columns, use --A and --B, if they are in a single column use --AB. 
     --AB attempts to find exactly two alleles (A/G/C/T) on the column, any more or less will cause the program to die. 
     Defaults are the same as the option name, i.e. "chrom", "position", "A", "B".
@@ -41,11 +46,19 @@ Add TOPBOT designation to a delimited file
     Insert the TOPBOT designation after this column. When set to 0, this becomes the first column in the output.
     (default after last column)
 
+  --errorfilter
+    Filter SNPs with an error (no TOP or BOT strand)
+
   --comment STRING
     String denoting lines to be skipped if this string is the first non-whitespace on a line. (default '#')
 
   --skip NUMBER
     Skip this many lines from the start, including comment lines. (default 0)
+
+  --chromprefix STRING
+    Append this string to the start of chromosome names when looking in the FASTA reference. 
+    A common alternative value for this is "chr".
+    (default "")
 
 =cut
 
@@ -70,6 +83,8 @@ my $AB;
 my $comment = "#";
 my $skip = 0;
 my $insertcol;
+my $errorfilter;
+my $chromprefix = "";
 
 GetOptions(
     "help"          => \$help,
@@ -84,6 +99,8 @@ GetOptions(
     "comment=s"     => \$comment,
     "skip=i"        => \$skip,
     "insertcol=i"   => \$insertcol,
+    "errorfilter"   => \$errorfilter,
+    "chromprefix=s" => \$chromprefix,
 
 ) or die "Error in command line arguments. Use --help for more information.\n";
 if(@ARGV > 0) { die("Unused parameters in command line: " . join("\t", @ARGV)) };
@@ -127,9 +144,9 @@ if($noheader) {
     my $hsay = "need to be integers with no header";
     if($chrom =~ /^\d+$/ || $position =~ /^\d+$/) { die "--chrom, --position $hsay.\n" }
     if(defined($AB)) {
-        if($AB=~ /^\d+$/) { die "--AB $hsay\n" }
+        if($AB =~ /^\d+$/) { die "--AB $hsay\n" }
     } else {
-        if($A=~ /^\d+$/ || $B=~ /^\d+$/) { die "--A and --B $hsay\n" }
+        if($A =~ /^\d+$/ || $B ~ /^\d+$/) { die "--A and --B $hsay\n" }
     }
 }
 
@@ -142,8 +159,29 @@ while(<>) {
     my @line = split /$delim/o;
     if($header_unseen) {
         # set the column numbers
-        
+        my %cols;
+        @cols{@line} = (0..$#line);
+        foreach ($chrom, $position, $A, $B, $AB) {
+            unless(defined($_)) { next }
+            if($_ =~ /^\d+$/) { next }
+            if(defined($cols{$_})) {
+                $_ = $cols{$_};
+            } else {
+                die "Column $_ not found.\n";
+            }
+        }
     }
     
+    # TODO: add chromprefix
+
+    # topbot_genome $ref, CHROM, POSITION, ALLELEA, ALLELEB;
+    
+    # TODO: process /^ERROR_/, maybe count them for the user
+    # TODO: option to filter errors
+
+    # insert into output
+
 }
+
+# STDERR summary of errors
 
