@@ -14,3 +14,7 @@ In this example you would first run, or add to your .bashrc or .bash_profile
 # REQUIREMENTS
 
 This module's `topbot_genome` depends on the SAMtools software being installed on the system. 
+
+
+# Companion script
+The script add_TOPBOT.pl allows the TOPBOT information to be added to a delimited file. Please run `perldoc add_TOPBOT.pl` for more information. 
