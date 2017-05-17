@@ -9,19 +9,19 @@
 
 use 5.014;
 use warnings;
-use Test::More tests => 16;
+use Test::More tests => 15;
 use Test::Exception;
 
 use Bio::SNP::TOPBOT; 
 my ($reference_file, $chrom, $position, $allele_a, $allele_b);
 
 # Test the synopsis
-$reference_file = "$ENV{bahlolab_db}/hg19/standard_gatk/hg19.fa"; # reference sequence file
-$chrom = 'chr1';
-$position = 723819;
-$allele_a = 'A';
-$allele_b = 'T';
-is((topbot_genome $reference_file, $chrom, $position, $allele_a, $allele_b), 'BOT', "Testing an ambigious SNP from a FASTA file");
+# $reference_file = "$ENV{bahlolab_db}/hg19/standard_gatk/hg19.fa"; # reference sequence file
+# $chrom = 'chr1';
+# $position = 723819;
+# $allele_a = 'A';
+# $allele_b = 'T';
+# is((topbot_genome $reference_file, $chrom, $position, $allele_a, $allele_b), 'BOT', "Testing an ambigious SNP from a FASTA file");
 
 my $sequence;
 
