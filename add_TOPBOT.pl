@@ -69,6 +69,7 @@ use autodie;
 use Getopt::Long;
 use Pod::Usage;
 use Bio::SNP::TOPBOT;
+use List::Util qw(max);
 
 # Process command line options
 my $help;
@@ -152,8 +153,11 @@ if($noheader) {
 
 
 # Process the input
+my %error_table;
+my $successes;
 my $header_unseen = !$noheader; # assume column numbers are correct
 while(<>) {
+    # basic line processing, skip
     if($skip > 0) {
         $skip--;
         next;
@@ -161,6 +165,8 @@ while(<>) {
     next if /^\s*$comment/o;
     chomp;
     my @line = split /$delim/o;
+
+    # process header if required
     if($header_unseen) {
         # set the column numbers
         my %cols;
@@ -174,8 +180,12 @@ while(<>) {
                 die "Column $_ not found.\n";
             }
         }
+        unless (defined $insertcol) {
+            $insertcol = @line; # default as the last column
+        }
     }
     
+    # determine and check A and B allele
     my ($allele_a, $allele_b);
     my $is_base_error;
     if(defined($AB)) {
@@ -193,6 +203,7 @@ while(<>) {
         }
     }
 
+    # find TOPBOT value
     my $topbot;
     if(defined($is_base_error)) {
         $topbot = $is_base_error;
@@ -200,12 +211,31 @@ while(<>) {
         $topbot = topbot_genome $ref, "$chromprefix${line[$chrom]}", $line[$position], $allele_a, $allele_b;
     }
     
-    # TODO: process /^ERROR_/, maybe count them for the user
-    # TODO: option to filter errors
+    # count errors
+    if($topbot =~ /^ERROR/) {
+        $error_table{$topbot}++;
+        if($errorfilter) {
+            # Filter error lines
+            next
+        }
+    } else {
+        $successes++;
+    }
 
     # insert into output
+    splice @line, $insertcol, 0, @line;
 
+    # Give output line
+    say join($delim, @line);
 }
 
-# STDERR summary of errors
+# STDERR summary
+my @keys_sorted = sort (keys %error_table);
+
+warn "Successful TOPBOT: $successes\n";
+warn "Error summary:\n";
+my $max_k_len = max (map { length } @keys_sorted);
+for my $k (@keys_sorted) {
+    warn (sprintf "    %-${max_k_len}s: %s\n", $k, $error_table{$k});
+}
 
