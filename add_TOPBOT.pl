@@ -32,7 +32,7 @@ Add TOPBOT designation to a delimited file
     Denotes that the file has a no header line. 
 
   --chrom STRING
-  --position NUMBER
+  --position STRING
   --A STRING
   --B STRING
   --AB STRING
@@ -45,6 +45,12 @@ Add TOPBOT designation to a delimited file
   --insertcol = NUMBER
     Insert the TOPBOT designation after this column. When set to 0, this becomes the first column in the output.
     (default after last column)
+
+  --shortname
+    Instead of designating TOPBOT with TOP and BOT, just use T and B.
+
+  --headername
+    Name of the column for the header with TOPBOT designation (default TOPBOT)
 
   --errorfilter
     Filter SNPs with an error (no TOP or BOT strand)
@@ -85,7 +91,9 @@ my $comment = "#";
 my $skip = 0;
 my $insertcol;
 my $errorfilter;
-my $chromprefix = "";
+my $chromprefix = '';
+my $shortname = '';
+my $headername = 'TOPBOT';
 
 GetOptions(
     "help"          => \$help,
@@ -93,7 +101,7 @@ GetOptions(
     "delim=s"       => \$delim,
     "noheader"      => \$noheader,
     "chrom=s"       => \$chrom,
-    "position=i"    => \$position,
+    "position=s"    => \$position,
     "A=s"           => \$A,
     "B=s"           => \$B,
     "AB=s"          => \$AB,
@@ -102,9 +110,11 @@ GetOptions(
     "insertcol=i"   => \$insertcol,
     "errorfilter"   => \$errorfilter,
     "chromprefix=s" => \$chromprefix,
+    "shortname"     => \$shortname,
+    "headername=s"  => \$headername,
 
 ) or die "Error in command line arguments. Use --help for more information.\n";
-if(@ARGV > 0) { die("Unused parameters in command line: " . join("\t", @ARGV)) };
+if(@ARGV > 1) { die("Unused parameters in command line: " . join("\t", @ARGV)) };
 
 if(defined($help)){
     pod2usage(
@@ -183,6 +193,14 @@ while(<>) {
         unless (defined $insertcol) {
             $insertcol = @line; # default as the last column
         }
+        $header_unseen = 0;
+
+        # print header line
+        unless ($noheader) {
+            splice @line, $insertcol, 0, ($headername);
+            say join($delim, @line);
+        }
+        next;
     }
     
     # determine and check A and B allele
@@ -220,10 +238,13 @@ while(<>) {
         }
     } else {
         $successes++;
+        if($shortname) {
+            $topbot =~ s/O.$//;
+        }
     }
 
     # insert into output
-    splice @line, $insertcol, 0, @line;
+    splice @line, $insertcol, 0, ($topbot);
 
     # Give output line
     say join($delim, @line);
