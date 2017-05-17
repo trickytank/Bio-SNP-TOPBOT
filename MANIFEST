@@ -1,0 +1,10 @@
+add_TOPBOT.pl
+Build.PL
+lib/Bio/SNP/TOPBOT.pm
+LICENSE
+MANIFEST			This list of files
+README.md
+t/test_add_TOPBOT.pl.sh
+t/TOPBOT_test.t
+test_data/linkdatagen_test_data.txt
+USAGE.md
